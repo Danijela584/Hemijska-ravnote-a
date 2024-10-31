@@ -1,11 +1,5 @@
 const reactions = [
     {
-        equation: "H2 (g) + N2 (g) ⇄ 2NH3 (g)",
-        compounds: ["H2", "N2", "NH3"],
-        states: ["g", "g", "g"],
-        deltaH: -92.4 // Example value in kJ/mol
-    },
-    {
         equation: "PCl5 (g) ⇄ PCl3 (g) + Cl2 (g)",
         compounds: ["PCl5", "PCl3", "Cl2"],
         states: ["g", "g", "g"],
@@ -79,25 +73,10 @@ document.getElementById('question').innerText = questions[currentQuestion] + rea
 
 document.getElementById('left-button').addEventListener('click', () => checkAnswer('left'));
 document.getElementById('right-button').addEventListener('click', () => checkAnswer('right'));
-document.getElementById('yes-button').addEventListener('click', () => checkQuestion('yes'));
-document.getElementById('no-button').addEventListener('click', () => checkQuestion('no'));
+document.getElementById('no-effect-button').addEventListener('click', () => checkAnswer('no-effect'));
 
 function checkAnswer(side) {
     const resultElement = document.getElementById('result');
-    if (side === reactions[currentReaction].correctSide) {
-        resultElement.innerText = "Correct!";
-        resultElement.className = "correct";
-    } else {
-        resultElement.innerText = "Incorrect!";
-        resultElement.className = "incorrect";
-    }
-    currentReaction = (currentReaction + 1) % reactions.length;
-    document.getElementById('reaction').innerText = reactions[currentReaction].equation;
-    document.getElementById('question').innerText = questions[currentQuestion] + reactions[currentReaction].compounds[0] + "?";
-}
-
-function checkQuestion(answer) {
-    const answerElement = document.getElementById('answer');
     const reaction = reactions[currentReaction];
     const question = questions[currentQuestion];
     let correct = false;
@@ -106,40 +85,48 @@ function checkQuestion(answer) {
         const compound = question.split(" ")[4];
         const index = reaction.compounds.indexOf(compound);
         if (reaction.states[index] === "g" || reaction.states[index] === "aq") {
-            correct = (answer === 'yes' && reaction.correctSide === 'right') || (answer === 'no' && reaction.correctSide === 'left');
+            correct = (side === 'right' && reaction.compounds.indexOf(compound) < reaction.compounds.length / 2) || 
+                      (side === 'left' && reaction.compounds.indexOf(compound) >= reaction.compounds.length / 2);
+        } else {
+            correct = (side === 'no-effect');
         }
     } else if (question.includes("smanjenjem koncentracije")) {
         const compound = question.split(" ")[4];
         const index = reaction.compounds.indexOf(compound);
         if (reaction.states[index] === "g" || reaction.states[index] === "aq") {
-            correct = (answer === 'yes' && reaction.correctSide === 'left') || (answer === 'no' && reaction.correctSide === 'right');
+            correct = (side === 'left' && reaction.compounds.indexOf(compound) < reaction.compounds.length / 2) || 
+                      (side === 'right' && reaction.compounds.indexOf(compound) >= reaction.compounds.length / 2);
+        } else {
+            correct = (side === 'no-effect');
         }
     } else if (question.includes("povećanjem pritiska")) {
-        const gasMoleculesLeft = reaction.states.filter(state => state === "g" && reaction.compounds.indexOf(state) < reaction.compounds.length / 2).length;
-        const gasMoleculesRight = reaction.states.filter(state => state === "g" && reaction.compounds.indexOf(state) >= reaction.compounds.length / 2).length;
-        correct = (answer === 'yes' && gasMoleculesLeft > gasMoleculesRight) || (answer === 'no' && gasMoleculesLeft <= gasMoleculesRight);
+        const gasMoleculesLeft = reaction.states.filter((state, i) => state === "g" && i < reaction.compounds.length / 2).length;
+        const gasMoleculesRight = reaction.states.filter((state, i) => state === "g" && i >= reaction.compounds.length / 2).length;
+        correct = (side === 'right' && gasMoleculesLeft > gasMoleculesRight) || (side === 'left' && gasMoleculesLeft <= gasMoleculesRight);
     } else if (question.includes("smanjenjem zapremine")) {
-        const gasMoleculesLeft = reaction.states.filter(state => state === "g" && reaction.compounds.indexOf(state) < reaction.compounds.length / 2).length;
-        const gasMoleculesRight = reaction.states.filter(state => state === "g" && reaction.compounds.indexOf(state) >= reaction.compounds.length / 2).length;
-        correct = (answer === 'yes' && gasMoleculesLeft > gasMoleculesRight) || (answer === 'no' && gasMoleculesLeft <= gasMoleculesRight);
+        const gasMoleculesLeft = reaction.states.filter((state, i) => state === "g" && i < reaction.compounds.length / 2).length;
+        const gasMoleculesRight = reaction.states.filter((state, i) => state === "g" && i >= reaction.compounds.length / 2).length;
+        correct = (side === 'right' && gasMoleculesLeft > gasMoleculesRight) || (side === 'left' && gasMoleculesLeft <= gasMoleculesRight);
     } else if (question.includes("povećanjem zapremine")) {
-        const gasMoleculesLeft = reaction.states.filter(state => state === "g" && reaction.compounds.indexOf(state) < reaction.compounds.length / 2).length;
-        const gasMoleculesRight = reaction.states.filter(state => state === "g" && reaction.compounds.indexOf(state) >= reaction.compounds.length / 2).length;
-        correct = (answer === 'yes' && gasMoleculesLeft < gasMoleculesRight) || (answer === 'no' && gasMoleculesLeft >= gasMoleculesRight);
+        const gasMoleculesLeft = reaction.states.filter((state, i) => state === "g" && i < reaction.compounds.length / 2).length;
+        const gasMoleculesRight = reaction.states.filter((state, i) => state === "g" && i >= reaction.compounds.length / 2).length;
+        correct = (side === 'left' && gasMoleculesLeft > gasMoleculesRight) || (side === 'right' && gasMoleculesLeft <= gasMoleculesRight);
     } else if (question.includes("povećanjem temperature")) {
-        correct = (answer === 'yes' && reaction.deltaH > 0) || (answer === 'no' && reaction.deltaH <= 0);
+        correct = (side === 'right' && reaction.deltaH > 0) || (side === 'left' && reaction.deltaH <= 0);
     } else if (question.includes("smanjenjem temperature")) {
-        correct = (answer === 'yes' && reaction.deltaH < 0) || (answer === 'no' && reaction.deltaH >= 0);
+        correct = (side === 'left' && reaction.deltaH < 0) || (side === 'right' && reaction.deltaH >= 0);
     }
 
     if (correct) {
-        answerElement.innerText = "Correct!";
-        answerElement.className = "correct";
+        resultElement.innerText = "Correct!";
+        resultElement.className = "correct";
     } else {
-        answerElement.innerText = "Incorrect!";
-        answerElement.className = "incorrect";
+        resultElement.innerText = "Incorrect!";
+        resultElement.className = "incorrect";
     }
 
+    currentReaction = (currentReaction + 1) % reactions.length;
     currentQuestion = (currentQuestion + 1) % questions.length;
+    document.getElementById('reaction').innerText = reactions[currentReaction].equation;
     document.getElementById('question').innerText = questions[currentQuestion] + reactions[currentReaction].compounds[0] + "?";
 }
