@@ -55,21 +55,51 @@ const reactions = [
     }
 ];
 
-const questions = [
-    "Kako se menja ravnoteža povećanjem koncentracije ",
-    "Kako se menja ravnoteža smanjenjem koncentracije ",
-    "Kako se menja ravnoteža povećanjem pritiska?",
-    "Kako se menja ravnoteža smanjenjem zapremine?",
-    "Kako se menja ravnoteža povećanjem zapremine?",
-    "Kako se menja ravnoteža povećanjem temperature?",
-    "Kako se menja ravnoteža smanjenjem temperature?"
+const levels = [
+    {
+        name: "Level 1: Increase of Concentration",
+        questions: [
+            "Kako se menja ravnoteža povećanjem koncentracije ",
+            "Kako se menja ravnoteža povećanjem koncentracije ",
+            "Kako se menja ravnoteža povećanjem koncentracije ",
+            "Kako se menja ravnoteža povećanjem koncentracije ",
+            "Kako se menja ravnoteža povećanjem koncentracije ",
+            "Kako se menja ravnoteža povećanjem koncentracije ",
+            "Kako se menja ravnoteža povećanjem koncentracije "
+        ]
+    },
+    {
+        name: "Level 2: Decrease of Concentration",
+        questions: [
+            "Kako se menja ravnoteža smanjenjem koncentracije ",
+            "Kako se menja ravnoteža smanjenjem koncentracije ",
+            "Kako se menja ravnoteža smanjenjem koncentracije ",
+            "Kako se menja ravnoteža smanjenjem koncentracije ",
+            "Kako se menja ravnoteža smanjenjem koncentracije ",
+            "Kako se menja ravnoteža smanjenjem koncentracije ",
+            "Kako se menja ravnoteža smanjenjem koncentracije "
+        ]
+    },
+    {
+        name: "Level 3: Increase and Decrease of Temperature",
+        questions: [
+            "Kako se menja ravnoteža povećanjem temperature?",
+            "Kako se menja ravnoteža smanjenjem temperature?",
+            "Kako se menja ravnoteža povećanjem temperature?",
+            "Kako se menja ravnoteža smanjenjem temperature?",
+            "Kako se menja ravnoteža povećanjem temperature?",
+            "Kako se menja ravnoteža smanjenjem temperature?",
+            "Kako se menja ravnoteža povećanjem temperature?"
+        ]
+    }
 ];
 
-let currentReaction = 0;
+let currentLevel = 0;
 let currentQuestion = 0;
+let currentReaction = 0;
 
 document.getElementById('reaction').innerText = reactions[currentReaction].equation;
-document.getElementById('question').innerText = questions[currentQuestion] + reactions[currentReaction].compounds[0] + "?";
+document.getElementById('question').innerText = levels[currentLevel].questions[currentQuestion] + reactions[currentReaction].compounds[0] + "?";
 
 document.getElementById('left-button').addEventListener('click', () => checkAnswer('left'));
 document.getElementById('right-button').addEventListener('click', () => checkAnswer('right'));
@@ -78,15 +108,15 @@ document.getElementById('no-effect-button').addEventListener('click', () => chec
 function checkAnswer(side) {
     const resultElement = document.getElementById('result');
     const reaction = reactions[currentReaction];
-    const question = questions[currentQuestion];
+    const question = levels[currentLevel].questions[currentQuestion];
     let correct = false;
 
     if (question.includes("povećanjem koncentracije")) {
         const compound = question.split(" ")[4];
         const index = reaction.compounds.indexOf(compound);
         if (reaction.states[index] === "g" || reaction.states[index] === "aq") {
-            correct = (side === 'right' && reaction.compounds.indexOf(compound) < reaction.compounds.length / 2) || 
-                      (side === 'left' && reaction.compounds.indexOf(compound) >= reaction.compounds.length / 2);
+            correct = (side === 'right' && index < reaction.compounds.length / 2) || 
+                      (side === 'left' && index >= reaction.compounds.length / 2);
         } else {
             correct = (side === 'no-effect');
         }
@@ -94,23 +124,11 @@ function checkAnswer(side) {
         const compound = question.split(" ")[4];
         const index = reaction.compounds.indexOf(compound);
         if (reaction.states[index] === "g" || reaction.states[index] === "aq") {
-            correct = (side === 'left' && reaction.compounds.indexOf(compound) < reaction.compounds.length / 2) || 
-                      (side === 'right' && reaction.compounds.indexOf(compound) >= reaction.compounds.length / 2);
+            correct = (side === 'left' && index < reaction.compounds.length / 2) || 
+                      (side === 'right' && index >= reaction.compounds.length / 2);
         } else {
             correct = (side === 'no-effect');
         }
-    } else if (question.includes("povećanjem pritiska")) {
-        const gasMoleculesLeft = reaction.states.filter((state, i) => state === "g" && i < reaction.compounds.length / 2).length;
-        const gasMoleculesRight = reaction.states.filter((state, i) => state === "g" && i >= reaction.compounds.length / 2).length;
-        correct = (side === 'right' && gasMoleculesLeft > gasMoleculesRight) || (side === 'left' && gasMoleculesLeft <= gasMoleculesRight);
-    } else if (question.includes("smanjenjem zapremine")) {
-        const gasMoleculesLeft = reaction.states.filter((state, i) => state === "g" && i < reaction.compounds.length / 2).length;
-        const gasMoleculesRight = reaction.states.filter((state, i) => state === "g" && i >= reaction.compounds.length / 2).length;
-        correct = (side === 'right' && gasMoleculesLeft > gasMoleculesRight) || (side === 'left' && gasMoleculesLeft <= gasMoleculesRight);
-    } else if (question.includes("povećanjem zapremine")) {
-        const gasMoleculesLeft = reaction.states.filter((state, i) => state === "g" && i < reaction.compounds.length / 2).length;
-        const gasMoleculesRight = reaction.states.filter((state, i) => state === "g" && i >= reaction.compounds.length / 2).length;
-        correct = (side === 'left' && gasMoleculesLeft > gasMoleculesRight) || (side === 'right' && gasMoleculesLeft <= gasMoleculesRight);
     } else if (question.includes("povećanjem temperature")) {
         correct = (side === 'right' && reaction.deltaH > 0) || (side === 'left' && reaction.deltaH <= 0);
     } else if (question.includes("smanjenjem temperature")) {
@@ -125,8 +143,16 @@ function checkAnswer(side) {
         resultElement.className = "incorrect";
     }
 
+    currentQuestion++;
+    if (currentQuestion >= levels[currentLevel].questions.length) {
+        currentQuestion = 0;
+        currentLevel++;
+        if (currentLevel >= levels.length) {
+            currentLevel = 0; // Restart the game or handle end of game
+        }
+    }
+
     currentReaction = (currentReaction + 1) % reactions.length;
-    currentQuestion = (currentQuestion + 1) % questions.length;
     document.getElementById('reaction').innerText = reactions[currentReaction].equation;
-    document.getElementById('question').innerText = questions[currentQuestion] + reactions[currentReaction].compounds[0] + "?";
+    document.getElementById('question').innerText = levels[currentLevel].questions[currentQuestion] + reactions[currentReaction].compounds[0] + "?";
 }
